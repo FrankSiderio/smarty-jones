@@ -1,0 +1,16 @@
+LICENSE
+MANIFEST.in
+README.md
+pyproject.toml
+requirements-dev.txt
+requirements.txt
+setup.py
+smarty_jones/__init__.py
+smarty_jones/handler.py
+smarty_jones/py.typed
+smarty_jones.egg-info/PKG-INFO
+smarty_jones.egg-info/SOURCES.txt
+smarty_jones.egg-info/dependency_links.txt
+smarty_jones.egg-info/entry_points.txt
+smarty_jones.egg-info/requires.txt
+smarty_jones.egg-info/top_level.txt

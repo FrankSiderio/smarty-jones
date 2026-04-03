@@ -1,0 +1,12 @@
+include README.md
+include LICENSE
+include requirements*.txt
+include pyproject.toml
+recursive-include smarty_jones *.py
+recursive-include smarty_jones py.typed
+exclude tests/*
+exclude *.pyc
+exclude __pycache__
+exclude .git*
+exclude .mypy_cache
+exclude .pytest_cache

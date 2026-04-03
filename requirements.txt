@@ -1,0 +1,3 @@
+# Core dependencies
+# No heavy dependencies - keeping it lightweight!
+# All functionality uses Python standard library only

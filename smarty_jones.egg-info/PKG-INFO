@@ -1,0 +1,71 @@
+Metadata-Version: 2.4
+Name: smarty-jones
+Version: 0.1.0
+Summary: A lightweight debugging assistant that provides AI-powered error analysis
+Author: Smarty Jones Team
+Author-email: Smarty Jones Team <contact@smarty-jones.dev>
+Maintainer-email: Smarty Jones Team <contact@smarty-jones.dev>
+License: MIT
+Project-URL: Homepage, https://github.com/smarty-jones/smarty-jones
+Project-URL: Documentation, https://docs.smarty-jones.dev
+Project-URL: Repository, https://github.com/smarty-jones/smarty-jones
+Project-URL: Bug Tracker, https://github.com/smarty-jones/smarty-jones/issues
+Keywords: debugging,error-analysis,ai,llm,python,exception-handling,development-tools,code-analysis
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Debuggers
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: System :: Monitoring
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+Requires-Dist: pytest-cov; extra == "dev"
+Requires-Dist: black; extra == "dev"
+Requires-Dist: flake8; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: pre-commit; extra == "dev"
+Provides-Extra: test
+Requires-Dist: pytest>=7.0; extra == "test"
+Requires-Dist: pytest-cov; extra == "test"
+Requires-Dist: black; extra == "test"
+Requires-Dist: flake8; extra == "test"
+Provides-Extra: docs
+Requires-Dist: sphinx; extra == "docs"
+Requires-Dist: sphinx-rtd-theme; extra == "docs"
+Requires-Dist: myst-parser; extra == "docs"
+Dynamic: author
+Dynamic: license-file
+Dynamic: requires-python
+
+# Smarty Jones - Minimal Version
+
+A super lightweight debugging assistant - HTTP endpoint only.
+
+## Quick Test
+
+```python
+from smarty_jones import SmartyJonesHandler
+
+# Connect to your AI service
+SmartyJonesHandler.install(
+    endpoint_url="https://your-ai-service.com/analyze",
+    api_token="your-api-key"
+)
+
+# Now trigger an error to test
+def test_function():
+    return 1 / 0
+
+test_function()  # This will send error to your AI service
+```
