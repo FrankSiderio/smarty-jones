@@ -5,8 +5,11 @@ Minimal Smarty Jones Handler - Core functionality only
 import sys
 import traceback
 import json
-from typing import Dict, Any, Optional
+import os
+from typing import Dict, Any, Optional, List
 from urllib.request import urlopen, Request
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
 
 
 class SmartyJonesHandler:
@@ -16,10 +19,22 @@ class SmartyJonesHandler:
     _original_excepthook = None
     _endpoint_url = None
     _api_token = None
+    _additional_context = None
     
     @classmethod
-    def install(cls, endpoint_url: str, api_token: Optional[str] = None):
-        """Install the error handler"""
+    def install(cls, endpoint_url: str, api_token: Optional[str] = None, **additional_context):
+        """Install the error handler
+        
+        Args:
+            endpoint_url: AI service endpoint
+            api_token: API token for authentication
+            **additional_context: Additional context to send with every error analysis
+                Examples:
+                - input_params: Function parameters or input data
+                - documentation: Architecture notes, data models, etc.
+                - project_info: Project description, patterns, conventions
+                - environment: Deployment environment, versions, etc.
+        """
         
         if cls._installed:
             print("SmartyJonesHandler already installed")
@@ -31,6 +46,7 @@ class SmartyJonesHandler:
         # Store configuration
         cls._endpoint_url = endpoint_url
         cls._api_token = api_token
+        cls._additional_context = cls._process_additional_context(additional_context) if additional_context else {}
         
         # Save original exception hook
         cls._original_excepthook = sys.excepthook
@@ -46,12 +62,151 @@ class SmartyJonesHandler:
                 cls._original_excepthook(exc_type, exc_value, exc_traceback)
         
         def smart_exit(code=0, *args, **kwargs):
-            print(f"Captured exit with code {code}")
+            print(f"Captured exit with code {code}. Not implemented analysis for exits yet.")
 
         sys.excepthook = smart_excepthook
         sys.exit = smart_exit
         cls._installed = True
-        print("✅ SmartyJonesHandler installed. YAY! 🎉")
+    
+    @classmethod
+    def _process_additional_context(cls, additional_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Process additional context, reading file contents if paths are provided"""
+        processed_context = {}
+        
+        for key, value in additional_context.items():
+            processed_context[key] = cls._process_value_for_file_paths(value)
+                
+        return processed_context
+    
+    @classmethod
+    def _process_value_for_file_paths(cls, value: Any) -> Any:
+        """Recursively process a value to find and read file paths"""
+        if isinstance(value, str) and cls._is_file_path(value):
+            try:
+                with open(value, 'r', encoding='utf-8', errors='ignore') as f:
+                    file_content = f.read()
+                return {
+                    "file_path": value,
+                    "content": file_content
+                }
+            except Exception as e:
+                return {
+                    "file_path": value,
+                    "error": f"Could not read file: {str(e)}"
+                }
+        elif isinstance(value, str) and cls._is_directory_path(value):
+            return cls._process_directory(value)
+        elif isinstance(value, dict):
+            # Recursively process dictionary values
+            processed_dict = {}
+            for k, v in value.items():
+                processed_dict[k] = cls._process_value_for_file_paths(v)
+            return processed_dict
+        elif isinstance(value, (list, tuple)):
+            # Recursively process list/tuple items
+            processed_list = [cls._process_value_for_file_paths(item) for item in value]
+            return processed_list if isinstance(value, list) else tuple(processed_list)
+        else:
+            # Return value as-is for non-string, non-dict, non-list types
+            return value
+    
+    @classmethod
+    def _is_file_path(cls, value: str) -> bool:
+        """Check if a string value appears to be a file path"""
+        if not value or len(value) < 2:
+            return False
+            
+        # Check if it's an existing file
+        if os.path.isfile(value):
+            return True
+            
+        # Check if it looks like a file path (has extension and path separators)
+        return (
+            ('/' in value or '\\' in value or value.startswith('.')) and
+            '.' in os.path.basename(value) and
+            not value.startswith('http') and
+            not '://' in value
+        )
+    
+    @classmethod
+    def _is_directory_path(cls, value: str) -> bool:
+        """Check if a string value appears to be a directory path"""
+        if not value or len(value) < 2:
+            return False
+            
+        # Check if it's an existing directory
+        return os.path.isdir(value)
+    
+    @classmethod
+    def _process_directory(cls, directory_path: str, max_files: int = 20, max_file_size: int = 50000) -> Dict[str, Any]:
+        """Process a directory by reading all text files within it"""
+        try:
+            files_content = {}
+            files_processed = 0
+            
+            # Get all files in directory (not subdirectories)
+            for filename in os.listdir(directory_path):
+                if files_processed >= max_files:
+                    files_content["_truncated"] = f"Only showing first {max_files} files"
+                    break
+                    
+                file_path = os.path.join(directory_path, filename)
+                
+                # Only process regular files, skip directories
+                if not os.path.isfile(file_path):
+                    continue
+                    
+                # Skip binary files based on extension
+                if cls._is_likely_text_file(filename):
+                    try:
+                        # Check file size
+                        if os.path.getsize(file_path) > max_file_size:
+                            files_content[filename] = {
+                                "error": f"File too large (>{max_file_size} bytes)"
+                            }
+                            continue
+                            
+                        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                            content = f.read()
+                        files_content[filename] = {
+                            "file_path": file_path,
+                            "content": content
+                        }
+                        files_processed += 1
+                    except Exception as e:
+                        files_content[filename] = {
+                            "error": f"Could not read file: {str(e)}"
+                        }
+                        
+            return {
+                "directory_path": directory_path,
+                "files": files_content,
+                "total_files_processed": files_processed
+            }
+            
+        except Exception as e:
+            return {
+                "directory_path": directory_path,
+                "error": f"Could not read directory: {str(e)}"
+            }
+    
+    @classmethod
+    def _is_likely_text_file(cls, filename: str) -> bool:
+        """Check if a file is likely a text file based on extension"""
+        text_extensions = {
+            '.txt', '.md', '.py', '.js', '.ts', '.html', '.css', '.json', '.xml', '.yaml', '.yml',
+            '.csv', '.log', '.cfg', '.conf', '.ini', '.sh', '.bat', '.sql', '.php', '.rb', '.go',
+            '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.rs', '.kt', '.swift', '.r', '.m',
+            '.dockerfile', '.gitignore', '.env', '.properties', '.toml'
+        }
+        
+        # Get file extension
+        _, ext = os.path.splitext(filename.lower())
+        
+        # Include files with known text extensions or no extension (like README, Dockerfile)
+        return ext in text_extensions or ext == '' or filename.lower() in {
+            'readme', 'license', 'changelog', 'dockerfile', 'makefile', 'requirements'
+        }
     
     @classmethod
     def uninstall(cls):
@@ -72,7 +227,16 @@ class SmartyJonesHandler:
             "stack_trace": ''.join(traceback.format_tb(exc_traceback))
         }
         
-        # Get analysis from HTTP endpoint
+        # Extract and examine source code from stack trace
+        source_code_info = cls._extract_source_code_from_traceback(exc_traceback)
+        if source_code_info:
+            context["source_code"] = source_code_info
+        
+        # Add additional context if provided
+        if cls._additional_context:
+            context["additional_context"] = cls._additional_context
+        
+        # Get analysis from ChatOpenAI
         try:
             analysis = cls._call_endpoint(context)
             cls._display_analysis(analysis)
@@ -81,39 +245,133 @@ class SmartyJonesHandler:
             print(f"Analysis failed: {e}")
     
     @classmethod
-    def _call_endpoint(cls, context: Dict[str, Any]) -> Dict[str, Any]:
-        """Call HTTP endpoint for analysis"""
-        print("📡 Calling Smarty Jones endpoint for analysis...")
-        payload = {
-            "system_prompt": cls._get_system_prompt(),
-            "context": context
-        }
+    def _extract_source_code_from_traceback(cls, exc_traceback) -> List[Dict[str, Any]]:
+        """Extract source code from files in the stack trace"""
+        source_files = []
+        tb = exc_traceback
         
-        headers = {"Content-Type": "application/json"}
-        if cls._api_token:
-            headers["Authorization"] = f"Bearer {cls._api_token}"
+        while tb is not None:
+            filename = tb.tb_frame.f_code.co_filename
+            line_number = tb.tb_lineno
+            function_name = tb.tb_frame.f_code.co_name
             
-        data = json.dumps(payload).encode('utf-8')
-        request = Request(cls._endpoint_url, data=data, headers=headers, method='POST')
+            # Skip system/library files
+            if cls._should_examine_file(filename):
+                source_info = cls._read_source_code_around_line(filename, line_number, function_name)
+                if source_info:
+                    source_files.append(source_info)
+            
+            tb = tb.tb_next
         
-        with urlopen(request, timeout=10) as response:
-            if response.getcode() == 200:
-                result = json.loads(response.read().decode('utf-8'))
-                return result
-            else:
-                raise Exception(f"HTTP {response.getcode()}")
+        return source_files
+    
+    @classmethod
+    def _should_examine_file(cls, filename: str) -> bool:
+        """Determine if we should examine the source code of this file"""
+        # Skip system libraries and site-packages
+        skip_patterns = [
+            '/lib/python',
+            '/site-packages/',
+            '/dist-packages/',
+            '<frozen',
+            '<built-in'
+        ]
+        
+        for pattern in skip_patterns:
+            if pattern in filename:
+                return False
+                
+        # Only examine files that exist and are readable
+        return os.path.isfile(filename)
+    
+    @classmethod
+    def _read_source_code_around_line(cls, filename: str, line_number: int, function_name: str, context_lines: int = 5) -> Dict[str, Any]:
+        """Read source code around a specific line"""
+        try:
+            with open(filename, 'r', encoding='utf-8', errors='ignore') as f:
+                lines = f.readlines()
+            
+            start_line = max(1, line_number - context_lines)
+            end_line = min(len(lines), line_number + context_lines)
+            
+            code_lines = []
+            for i in range(start_line - 1, end_line):  # -1 for 0-based indexing
+                line_num = i + 1
+                line_content = lines[i].rstrip()
+                is_error_line = (line_num == line_number)
+                
+                code_lines.append({
+                    "line_number": line_num,
+                    "content": line_content,
+                    "is_error_line": is_error_line
+                })
+            
+            return {
+                "filename": os.path.basename(filename),
+                "full_path": filename,
+                "function_name": function_name,
+                "error_line_number": line_number,
+                "code_lines": code_lines,
+                "total_lines_in_file": len(lines)
+            }
+            
+        except Exception as e:
+            return {
+                "filename": os.path.basename(filename),
+                "full_path": filename,
+                "function_name": function_name,
+                "error_line_number": line_number,
+                "error": f"Could not read source: {str(e)}"
+            }
+
+    @classmethod
+    def _call_endpoint(cls, context: Dict[str, Any]) -> Dict[str, Any]:
+        """Call ChatOpenAI for analysis"""        
+        print("📡 Calling Smarty Jones AI for analysis...")
+        
+        # Initialize ChatOpenAI
+        llm = ChatOpenAI(
+            model="claude-4-6-sonnet",
+            base_url=cls._endpoint_url,
+            api_key=cls._api_token,
+            streaming=False
+        )
+        
+        # Prepare messages
+        system_prompt = cls._get_system_prompt()
+        context_str = json.dumps(context, indent=2)
+        print(f"🔍 Context sent to AI:\n{context_str}")
+        
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=f"Context: {context_str}")
+        ]
+        
+        # Call the LLM
+        response = llm.invoke(messages)
+        
+        # Parse response - expect JSON format
+        try:
+            result = json.loads(response.content)
+            return result
+        except json.JSONDecodeError:
+            # If not valid JSON, create a structured response
+            return {
+                "error_analysis": response.content,
+                "suggested_fix": "Review the error details above",
+                "confidence": 0.7
+            }
     
     @classmethod
     def _get_system_prompt(cls) -> str:
         """Get the system prompt - controlled by library"""
-        return """You are an expert debugger. Analyze the error context and return JSON with:
-{
-    "error_analysis": "Brief explanation of what went wrong",
-    "suggested_fix": "How to fix it", 
-    "confidence": 0.8
-}
-
-Context will include error_type, error_message, and stack_trace."""
+        return """You are an expert debugger with the sole goal of providing really useful error messages stating exactly what went wrong and potentially a way to fix it.
+- analyze the context and read the stack trace
+  - context should include an error message and stack trace
+- provide a helpful error message
+  - please note that the AI message is generated and may not be 100% accurate (give a confidence score if possible)
+- if you are unable to figure out what the error is then state that, provide what additional information you would need to give a better error message
+"""
     
     @classmethod
     def _display_analysis(cls, analysis: Dict[str, Any]):

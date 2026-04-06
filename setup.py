@@ -9,7 +9,10 @@ setup(
     author="Smarty Jones Team", 
     python_requires=">=3.8",
     packages=find_packages(),
-    install_requires=[],  # No dependencies!
+    install_requires=[
+        "langchain-openai>=0.1.0",
+        "langchain-core>=0.1.0"
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",

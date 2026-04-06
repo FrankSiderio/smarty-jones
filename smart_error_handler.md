@@ -5,15 +5,15 @@ A lightweight debugging assistant that (given good context) will identify failur
 ## Context
 In order for Smarty Jones to do a good job, it needs good context. What makes good context?
 
-### Error Exception (including a stack trace)
+### Error Exception (auto captured if exception is raised)
 
 Smarty needs to know what the error message is and a stack trace of that exception so it has a starting point as to what is wrong
 
 ### Input
 Whether it is input files or function parameters it helps to know what the exact inputs to the function are
 
-### Source code
-The code that is actually executing the functionality allows smarter to learn about how things work to better determine what went wrong to cause the error
+### Source code (auto captured from stack trace)
+The code that is actually executing the functionality allows smarty to learn about how things work to better determine what went wrong to cause the error.
 
 ### Documentation
 Additional information about architecture, data models, code design, etc will help smarty determine what the issue is
@@ -24,7 +24,21 @@ Additional information about architecture, data models, code design, etc will he
 ```python
 from smarty_jones import SmartyJonesHandler
 
-SmartyJonesHandler.install(endpoint_url="https://your-ai-service.com/analyze", api_token="your API KEY")
+# Basic usage
+SmartyJonesHandler.install(
+    endpoint_url="https://your-ai-service.com/analyze", 
+    api_token="your API KEY"
+)
+
+# With additional context
+SmartyJonesHandler.install(
+    endpoint_url="https://your-ai-service.com/analyze",
+    api_token="your API KEY",
+    input_params={"user_id": 123, "action": "process_payment"},
+    documentation="This is a payment processing system using Stripe API",
+    project_info="E-commerce platform with microservices architecture",
+    environment="production"
+)
 ```
 
 ## Default Prompt
@@ -42,9 +56,3 @@ context:
 {{context}}
 
 ```
-
-## goals:
-- pip library that is really lightweight and easy to implement
-- how do we make this secure? don't want to read any secrets or sensitive information
-  - think we need to have the prompt on the library side, this way no one can prompt inject
-- support for pure LLM or MCP
