@@ -1,2 +1,0 @@
-[console_scripts]
-smarty-jones = smarty_jones.cli:main
