@@ -7,7 +7,7 @@ name = "smarty-jones"
 version = "0.1.0"
 description = "A lightweight debugging assistant that provides AI-powered error analysis"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 authors = [
     {name = "Frank Siderio", email = "franksiderio@yahoo.com"}
 ]
@@ -27,7 +27,6 @@ keywords = [
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers", 
-    "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",

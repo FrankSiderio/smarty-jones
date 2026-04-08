@@ -28,7 +28,7 @@ from smarty_jones import SmartyJonesHandler
 SmartyJonesHandler.install(
     endpoint_url="https://your-ai-service.com/analyze", 
     api_token="your API KEY",
-    model="<your model>"
+    model="<your model>" # defaults to claude-4-6-sonnet
 )
 
 # With additional context
