@@ -24,7 +24,8 @@ from smarty_jones import SmartyJonesHandler
 # Install with your OpenAI-compatible endpoint
 SmartyJonesHandler.install(
     endpoint_url="https://api.anthropic.com/v1/chat/completions",  # or your endpoint
-    api_token="your-api-key"
+    api_token="your-api-key",
+    model="claude-4-6-sonnet"  # Optional, defaults to claude-4-6-sonnet
 )
 
 # Now any unhandled exception gets AI analysis
@@ -43,6 +44,7 @@ test_function()  # This will trigger AI-powered error analysis
 SmartyJonesHandler.install(
     endpoint_url="https://api.anthropic.com/v1/chat/completions",
     api_token="your-api-key",
+    model="gpt-4",  # Use different model
     config_file="app.json",                    # Single file
     documentation="/path/to/docs/",            # Entire directory
     user_data={"session_id": "abc123"},        # Custom data
@@ -57,6 +59,7 @@ SmartyJonesHandler.install(
 SmartyJonesHandler.install(
     endpoint_url="https://api.anthropic.com/v1/chat/completions", 
     api_token="your-api-key",
+    model="claude-4-6-sonnet",  # Default model
     config={
         "site_intent_path": "intents.json",
         "business_rules_path": "rules.yaml", 

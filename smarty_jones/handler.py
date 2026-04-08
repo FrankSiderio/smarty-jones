@@ -18,15 +18,17 @@ class SmartyJonesHandler:
     _original_excepthook = None
     _endpoint_url = None
     _api_token = None
+    _model = None
     _additional_context = None
     
     @classmethod
-    def install(cls, endpoint_url: str, api_token: Optional[str] = None, **additional_context):
+    def install(cls, endpoint_url: str, api_token: Optional[str] = None, model: str = "claude-4-6-sonnet", **additional_context):
         """Install the error handler
         
         Args:
             endpoint_url: AI service endpoint
             api_token: API token for authentication
+            model: AI model to use (defaults to claude-4-6-sonnet)
             **additional_context: Additional context to send with every error analysis
                 Examples:
                 - input_params: Function parameters or input data
@@ -45,6 +47,7 @@ class SmartyJonesHandler:
         # Store configuration
         cls._endpoint_url = endpoint_url
         cls._api_token = api_token
+        cls._model = model
         cls._additional_context = cls._process_additional_context(additional_context) if additional_context else {}
         
         # Save original exception hook
@@ -330,7 +333,7 @@ class SmartyJonesHandler:
         
         # Initialize ChatOpenAI
         llm = ChatOpenAI(
-            model="claude-4-6-sonnet",
+            model=cls._model,
             base_url=cls._endpoint_url,
             api_key=cls._api_token,
             streaming=False

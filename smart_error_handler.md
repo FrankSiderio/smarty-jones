@@ -27,7 +27,8 @@ from smarty_jones import SmartyJonesHandler
 # Basic usage
 SmartyJonesHandler.install(
     endpoint_url="https://your-ai-service.com/analyze", 
-    api_token="your API KEY"
+    api_token="your API KEY",
+    model="<your model>"
 )
 
 # With additional context
