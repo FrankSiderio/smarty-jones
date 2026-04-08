@@ -20,6 +20,21 @@ confirm() {
     esac
 }
 
+# Function to check if package exists on a repository
+check_package_exists() {
+    local repo_url="$1"
+    local package_name="$2"
+    local version="$3"
+    
+    local check_url="${repo_url}/project/${package_name}/${version}/"
+    
+    if curl -s --head "$check_url" | head -n 1 | grep -q "200 OK"; then
+        return 0  # Package exists
+    else
+        return 1  # Package doesn't exist
+    fi
+}
+
 # Check if we're in a virtual environment
 if [[ -z "${VIRTUAL_ENV}" ]]; then
     echo -e "${YELLOW}Warning: No virtual environment detected. Activating .venv...${NC}"
@@ -86,12 +101,19 @@ echo ""
 # Publish to selected repositories
 for repo in "${REPOS[@]}"; do
     if [ "$repo" = "test" ]; then
+        # Check if version already exists on TestPyPI
+        echo "🔍 Checking if version $VERSION exists on TestPyPI..."
+        if check_package_exists "https://test.pypi.org" "smarty-jones" "$VERSION"; then
+            echo -e "${YELLOW}⚠️  Version $VERSION already exists on TestPyPI!${NC}"
+            confirm "Continue with upload anyway (will likely fail)?"
+        fi
+        
         echo "📤 Uploading to TestPyPI..."
         echo "Use username: __token__"
         echo "Use your TestPyPI API token as password"
-        python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
         
-        if [ $? -eq 0 ]; then
+        # Upload with verbose output for better error details
+        if python -m twine upload --repository-url https://test.pypi.org/legacy/ --verbose dist/*; then
             echo -e "${GREEN}✅ Successfully uploaded to TestPyPI!${NC}"
             echo "Test installation with:"
             echo "pip install --index-url https://test.pypi.org/simple/ smarty-jones==$VERSION"
@@ -102,16 +124,28 @@ for repo in "${REPOS[@]}"; do
             fi
         else
             echo -e "${RED}❌ TestPyPI upload failed.${NC}"
+            echo -e "${YELLOW}💡 Common causes:${NC}"
+            echo "   • Package name 'smarty-jones' already exists"
+            echo "   • Version $VERSION already published"
+            echo "   • Invalid API token"
+            echo "   • Check your TestPyPI account at https://test.pypi.org/"
             exit 1
         fi
         
     elif [ "$repo" = "pypi" ]; then
+        # Check if version already exists on PyPI
+        echo "🔍 Checking if version $VERSION exists on PyPI..."
+        if check_package_exists "https://pypi.org" "smarty-jones" "$VERSION"; then
+            echo -e "${YELLOW}⚠️  Version $VERSION already exists on PyPI!${NC}"
+            confirm "Continue with upload anyway (will likely fail)?"
+        fi
+        
         echo "📤 Uploading to Production PyPI..."
         echo "Use username: __token__"
         echo "Use your PyPI API token as password"
-        python -m twine upload dist/*
         
-        if [ $? -eq 0 ]; then
+        # Upload with verbose output for better error details
+        if python -m twine upload --verbose dist/*; then
             echo -e "${GREEN}✅ Successfully uploaded to PyPI!${NC}"
             echo "Your package is now available at:"
             echo "https://pypi.org/project/smarty-jones/"
@@ -119,6 +153,11 @@ for repo in "${REPOS[@]}"; do
             echo "Install with: pip install smarty-jones==$VERSION"
         else
             echo -e "${RED}❌ PyPI upload failed.${NC}"
+            echo -e "${YELLOW}💡 Common causes:${NC}"
+            echo "   • Package name 'smarty-jones' already exists"
+            echo "   • Version $VERSION already published"
+            echo "   • Invalid API token"
+            echo "   • Check your PyPI account at https://pypi.org/"
             exit 1
         fi
     fi
