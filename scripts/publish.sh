@@ -124,10 +124,24 @@ for repo in "${REPOS[@]}"; do
     fi
 done
 
-# Suggest git tagging
+# Auto-tag the release
 echo ""
-echo "🏷️  Consider tagging this release:"
-echo "git tag v$VERSION"
-echo "git push origin v$VERSION"
+TAG="v$VERSION"
+if git rev-parse "$TAG" >/dev/null 2>&1; then
+    echo -e "${YELLOW}⚠️  Tag $TAG already exists.${NC}"
+else
+    echo "🏷️  Creating git tag: $TAG"
+    if confirm "Create and push tag $TAG?"; then
+        git tag "$TAG"
+        git push origin "$TAG"
+        echo -e "${GREEN}✅ Tagged and pushed $TAG${NC}"
+        echo ""
+        echo "📋 Create GitHub release at:"
+        echo "https://github.com/FrankSiderio/smarty-jones/releases/new?tag=$TAG"
+    else
+        echo "Skipped tagging."
+    fi
+fi
 
+echo ""
 echo -e "${GREEN}🎉 Publishing complete!${NC}"

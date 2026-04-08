@@ -37,7 +37,8 @@ The script will:
 - ✅ Prompt you to choose: TestPyPI, PyPI, or both
 - ✅ Handle uploads with proper authentication prompts
 - ✅ Provide installation commands and links
-- ✅ Suggest git tagging commands
+- ✅ Auto-create and push git tags
+- ✅ Provide GitHub release link
 
 ### 6. Authentication
 When prompted during upload:
@@ -63,20 +64,19 @@ python -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # Upload to PyPI  
 python -m twine upload dist/*
-```
 
-## Post-Publication
-
-### 8. Tag the Release (Git)
-```bash
+# Tag the release
 git tag v0.1.0  # Replace with your version
 git push origin v0.1.0
 ```
 
-### 9. Create GitHub Release
-- Go to your GitHub repository
-- Create a new release with the version tag
+## Post-Publication
+
+### 8. GitHub Release
+After the script creates and pushes your tag, create a GitHub release:
+- The script will provide a direct link to create the release
 - Add release notes describing changes
+- Attach any additional files if needed
 
 ## Troubleshooting
 
@@ -89,10 +89,11 @@ git push origin v0.1.0
 
 ## Future Automation
 
-Consider setting up GitHub Actions for automated publishing:
+Consider setting up GitHub Actions for fully automated publishing:
 1. Create `.github/workflows/publish.yml`
 2. Configure PyPI API tokens as GitHub secrets
 3. Auto-publish on new releases/tags
+4. The current script already handles most automation locally
 
 ## Quick Release Checklist
 
@@ -104,5 +105,5 @@ Consider setting up GitHub Actions for automated publishing:
 - [ ] Test install: `pip install --index-url https://test.pypi.org/simple/ smarty-jones`
 - [ ] Run script again and choose PyPI for production release
 - [ ] Verify on PyPI: `https://pypi.org/project/smarty-jones/`
-- [ ] Tag release: `git tag v{version} && git push origin v{version}`
-- [ ] Create GitHub release
+- [ ] Confirm git tag creation when prompted
+- [ ] Create GitHub release using the provided link
