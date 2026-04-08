@@ -1,8 +1,0 @@
-# Development dependencies
-pytest>=7.0
-pytest-cov
-black
-flake8
-mypy
-isort
-pre-commit

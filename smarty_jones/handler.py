@@ -7,7 +7,6 @@ import traceback
 import json
 import os
 from typing import Dict, Any, Optional, List
-from urllib.request import urlopen, Request
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, SystemMessage
 
@@ -327,7 +326,7 @@ class SmartyJonesHandler:
     @classmethod
     def _call_endpoint(cls, context: Dict[str, Any]) -> Dict[str, Any]:
         """Call ChatOpenAI for analysis"""        
-        print("📡 Calling Smarty Jones AI for analysis...")
+        print("📡 Captured error! Calling AI for smart analysis...")
         
         # Initialize ChatOpenAI
         llm = ChatOpenAI(
@@ -340,7 +339,7 @@ class SmartyJonesHandler:
         # Prepare messages
         system_prompt = cls._get_system_prompt()
         context_str = json.dumps(context, indent=2)
-        print(f"🔍 Context sent to AI:\n{context_str}")
+        # print(f"🔍 Context sent to AI:\n{context_str}")
         
         messages = [
             SystemMessage(content=system_prompt),
@@ -383,8 +382,5 @@ class SmartyJonesHandler:
             print(f"📝 {analysis['error_analysis']}")
         if "suggested_fix" in analysis:
             print(f"💡 {analysis['suggested_fix']}")
-        if "confidence" in analysis:
-            conf = analysis["confidence"]
-            print(f"📊 Confidence: {conf:.0%}" if isinstance(conf, (int, float)) else f"📊 Confidence: {conf}")
-            
+
         print("=" * 40 + "\n")

@@ -9,10 +9,10 @@ description = "A lightweight debugging assistant that provides AI-powered error 
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Smarty Jones Team", email = "contact@smarty-jones.dev"}
+    {name = "Frank Siderio", email = "franksiderio@yahoo.com"}
 ]
 maintainers = [
-    {name = "Smarty Jones Team", email = "contact@smarty-jones.dev"}
+    {name = "Frank Siderio", email = "franksiderio@yahoo.com"}
 ]
 keywords = [
     "debugging", 
@@ -40,38 +40,15 @@ classifiers = [
     "Topic :: System :: Monitoring",
 ]
 requires-python = ">=3.8"
-dependencies = []  # No dependencies - pure Python!
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0",
-    "pytest-cov", 
-    "black",
-    "flake8",
-    "mypy",
-    "isort",
-    "pre-commit"
-]
-test = [
-    "pytest>=7.0",
-    "pytest-cov",
-    "black", 
-    "flake8"
-]
-docs = [
-    "sphinx",
-    "sphinx-rtd-theme",
-    "myst-parser"
+dependencies = [
+    "langchain-openai>=0.1.0",
+    "langchain-core>=0.1.0"
 ]
 
 [project.urls]
-Homepage = "https://github.com/smarty-jones/smarty-jones"
-Documentation = "https://docs.smarty-jones.dev"
-Repository = "https://github.com/smarty-jones/smarty-jones"
-"Bug Tracker" = "https://github.com/smarty-jones/smarty-jones/issues"
-
-[project.scripts]
-smarty-jones = "smarty_jones.cli:main"
+Homepage = "https://github.com/FrankSiderio/smarty-jones"
+Repository = "https://github.com/FrankSiderio/smarty-jones"
+"Bug Tracker" = "https://github.com/FrankSiderio/smarty-jones/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

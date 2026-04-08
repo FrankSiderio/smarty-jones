@@ -6,7 +6,8 @@ setup(
     name="smarty-jones",
     version="0.1.0",
     description="Minimal debugging assistant with AI-powered error analysis",
-    author="Smarty Jones Team", 
+    author="Frank Siderio",
+    author_email="franksiderio@yahoo.com",
     python_requires=">=3.8",
     packages=find_packages(),
     install_requires=[
