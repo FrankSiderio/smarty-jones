@@ -61,7 +61,6 @@ SmartyJonesHandler.install(
     api_token="your-api-key",
     model="claude-4-6-sonnet",  # Default model
     config={
-        "site_intent_path": "intents.json",
         "business_rules_path": "rules.yaml", 
         "user_profiles": ["profile1.json", "profile2.json"]
     }
