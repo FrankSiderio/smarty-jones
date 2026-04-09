@@ -92,6 +92,36 @@ ZeroDivisionError: division by zero
 4. **AI Analysis**: Sends structured data to Claude Sonnet for intelligent diagnosis
 5. **Formatted Output**: Returns clear, actionable debugging advice
 
+## Security Considerations
+
+⚠️ **Important**: While Smarty Jones includes security protections, **you are responsible for the files and data you pass as additional context**.
+
+### What Smarty Jones Protects Against:
+- **Blocks sensitive file types**: Automatically excludes `.env`, `.key`, `.pem`, and other credential files
+- **Content filtering**: Redacts common secret patterns (API keys, passwords, tokens) from file contents
+- **Prompt injection**: Uses library-controlled prompts to prevent malicious input
+
+### Your Responsibility:
+- **Review file paths**: Ensure directories don't contain unintended sensitive files
+- **Validate custom data**: Check any custom context data before passing it
+- **Use appropriate endpoints**: Only use trusted AI service endpoints for your data
+
+### Best Practices:
+```python
+# ✅ Good - specific files you control
+SmartyJonesHandler.install(
+    endpoint_url="...",
+    config_file="./app/config.yaml",
+    docs_path="./docs/"
+)
+
+# ⚠️ Risky - entire home directory
+SmartyJonesHandler.install(
+    endpoint_url="...",
+    everything="~/"  # May contain sensitive files
+)
+```
+
 ## Uninstalling
 
 ```python

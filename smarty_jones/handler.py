@@ -89,7 +89,7 @@ class SmartyJonesHandler:
                     file_content = f.read()
                 return {
                     "file_path": value,
-                    "content": file_content
+                    "content": cls._filter_sensitive_content(file_content)
                 }
             except Exception as e:
                 return {
@@ -172,7 +172,7 @@ class SmartyJonesHandler:
                             content = f.read()
                         files_content[filename] = {
                             "file_path": file_path,
-                            "content": content
+                            "content": cls._filter_sensitive_content(content)
                         }
                         files_processed += 1
                     except Exception as e:
@@ -199,17 +199,56 @@ class SmartyJonesHandler:
             '.txt', '.md', '.py', '.js', '.ts', '.html', '.css', '.json', '.xml', '.yaml', '.yml',
             '.csv', '.log', '.cfg', '.conf', '.ini', '.sh', '.bat', '.sql', '.php', '.rb', '.go',
             '.java', '.cpp', '.c', '.h', '.hpp', '.cs', '.rs', '.kt', '.swift', '.r', '.m',
-            '.dockerfile', '.gitignore', '.env', '.properties', '.toml'
+            '.dockerfile', '.gitignore', '.properties', '.toml'
         }
+        
+        # Exclude potentially sensitive file extensions
+        sensitive_extensions = {'.env', '.key', '.pem', '.p12', '.pfx', '.keystore', '.secrets'}
         
         # Get file extension
         _, ext = os.path.splitext(filename.lower())
+        
+        # Block sensitive files
+        if ext in sensitive_extensions:
+            return False
         
         # Include files with known text extensions or no extension (like README, Dockerfile)
         return ext in text_extensions or ext == '' or filename.lower() in {
             'readme', 'license', 'changelog', 'dockerfile', 'makefile', 'requirements'
         }
     
+    @classmethod
+    def _filter_sensitive_content(cls, content: str) -> str:
+        """Remove potential secrets from file content"""
+        import re
+        
+        # Common secret patterns to redact
+        secret_patterns = [
+            # Key-value patterns
+            (r'(password\s*[=:]\s*)["\'][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(api_key\s*[=:]\s*)["\'][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(secret\s*[=:]\s*)["\'][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(token\s*[=:]\s*)["\'][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(access_token\s*[=:]\s*)["\'][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(private_key\s*[=:]\s*)["\'][^"\']+["\']', r'\1"[REDACTED]"'),
+            
+            # Database connection strings
+            (r'(mongodb://[^:]+:)[^@]+(@)', r'\1[REDACTED]\2'),
+            (r'(postgres://[^:]+:)[^@]+(@)', r'\1[REDACTED]\2'),
+            (r'(mysql://[^:]+:)[^@]+(@)', r'\1[REDACTED]\2'),
+            
+            # Common credential formats
+            (r'sk-[a-zA-Z0-9]{32,}', '[REDACTED_API_KEY]'),  # OpenAI-style keys
+            (r'ghp_[a-zA-Z0-9]{36}', '[REDACTED_GITHUB_TOKEN]'),  # GitHub tokens
+            (r'xoxb-[a-zA-Z0-9-]+', '[REDACTED_SLACK_TOKEN]'),  # Slack tokens
+        ]
+        
+        filtered_content = content
+        for pattern, replacement in secret_patterns:
+            filtered_content = re.sub(pattern, replacement, filtered_content, flags=re.IGNORECASE)
+        
+        return filtered_content
+
     @classmethod
     def uninstall(cls):
         """Remove the error handler"""
@@ -387,3 +426,35 @@ class SmartyJonesHandler:
             print(f"💡 {analysis['suggested_fix']}")
 
         print("=" * 40 + "\n")
+    
+    @classmethod
+    def _filter_sensitive_content(cls, content: str) -> str:
+        """Remove potential secrets from file content"""
+        import re
+        
+        # Common secret patterns to redact
+        secret_patterns = [
+            # Key-value patterns
+            (r'(password\s*[=:]\s*)["\'"][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(api_key\s*[=:]\s*)["\'"][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(secret\s*[=:]\s*)["\'"][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(token\s*[=:]\s*)["\'"][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(access_token\s*[=:]\s*)["\'"][^"\']+["\']', r'\1"[REDACTED]"'),
+            (r'(private_key\s*[=:]\s*)["\'"][^"\']+["\']', r'\1"[REDACTED]"'),
+            
+            # Database connection strings
+            (r'(mongodb://[^:]+:)[^@]+(@)', r'\1[REDACTED]\2'),
+            (r'(postgres://[^:]+:)[^@]+(@)', r'\1[REDACTED]\2'),
+            (r'(mysql://[^:]+:)[^@]+(@)', r'\1[REDACTED]\2'),
+            
+            # Common credential formats
+            (r'sk-[a-zA-Z0-9]{32,}', '[REDACTED_API_KEY]'),  # OpenAI-style keys
+            (r'ghp_[a-zA-Z0-9]{36}', '[REDACTED_GITHUB_TOKEN]'),  # GitHub tokens
+            (r'xoxb-[a-zA-Z0-9-]+', '[REDACTED_SLACK_TOKEN]'),  # Slack tokens
+        ]
+        
+        filtered_content = content
+        for pattern, replacement in secret_patterns:
+            filtered_content = re.sub(pattern, replacement, filtered_content, flags=re.IGNORECASE)
+        
+        return filtered_content
