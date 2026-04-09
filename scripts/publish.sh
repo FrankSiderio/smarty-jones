@@ -53,6 +53,41 @@ python -c "import build, twine" 2>/dev/null || {
     pip install --upgrade build twine
 }
 
+# Check for .pypirc file
+echo "🔑 Checking PyPI credentials..."
+if [ ! -f ~/.pypirc ]; then
+    echo -e "${RED}❌ Error: ~/.pypirc file not found!${NC}"
+    echo ""
+    echo -e "${YELLOW}The .pypirc file is required to store your PyPI/TestPyPI API tokens.${NC}"
+    echo ""
+    echo "Create ~/.pypirc with the following structure:"
+    echo ""
+    echo "[distutils]"
+    echo "index-servers = "
+    echo "    pypi"
+    echo "    testpypi"
+    echo ""
+    echo "[pypi]"
+    echo "username = __token__"
+    echo "password = pypi-your-api-token-here"
+    echo ""
+    echo "[testpypi]"
+    echo "repository = https://test.pypi.org/legacy/"
+    echo "username = __token__"
+    echo "password = pypi-your-testpypi-token-here"
+    echo ""
+    echo -e "${YELLOW}💡 Get API tokens from:${NC}"
+    echo "• PyPI: https://pypi.org/manage/account/token/"
+    echo "• TestPyPI: https://test.pypi.org/manage/account/token/"
+    echo ""
+    echo -e "${YELLOW}💡 After creating the file, secure it with:${NC}"
+    echo "chmod 600 ~/.pypirc"
+    echo ""
+    exit 1
+else
+    echo -e "${GREEN}✅ Found ~/.pypirc${NC}"
+fi
+
 # Check for uncommitted changes
 if ! git diff-index --quiet HEAD --; then
     echo -e "${YELLOW}Warning: You have uncommitted changes.${NC}"
@@ -109,11 +144,10 @@ for repo in "${REPOS[@]}"; do
         fi
         
         echo "📤 Uploading to TestPyPI..."
-        echo "Use username: __token__"
-        echo "Use your TestPyPI API token as password"
+        echo "Using credentials from ~/.pypirc..."
         
         # Upload with verbose output for better error details
-        if python -m twine upload --repository-url https://test.pypi.org/legacy/ --verbose dist/*; then
+        if python -m twine upload --repository testpypi --verbose dist/*; then
             echo -e "${GREEN}✅ Successfully uploaded to TestPyPI!${NC}"
             echo "Test installation with:"
             echo "pip install --index-url https://test.pypi.org/simple/ smarty-jones==$VERSION"
@@ -141,11 +175,10 @@ for repo in "${REPOS[@]}"; do
         fi
         
         echo "📤 Uploading to Production PyPI..."
-        echo "Use username: __token__"
-        echo "Use your PyPI API token as password"
+        echo "Using credentials from ~/.pypirc..."
         
         # Upload with verbose output for better error details
-        if python -m twine upload --verbose dist/*; then
+        if python -m twine upload --repository pypi --verbose dist/*; then
             echo -e "${GREEN}✅ Successfully uploaded to PyPI!${NC}"
             echo "Your package is now available at:"
             echo "https://pypi.org/project/smarty-jones/"
